@@ -1,0 +1,14 @@
+[workspace]
+resolver = "2"
+members = ["poe-trader-core", "poe-trader-app"]
+
+# Shared dependency versions keep every crate in the workspace consistent.
+# Bump here and never in a member crate.
+[workspace.dependencies]
+anyhow = "1"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "cookies"] }
+tokio = { version = "1", features = ["full"] }
+mockall = "0.15"

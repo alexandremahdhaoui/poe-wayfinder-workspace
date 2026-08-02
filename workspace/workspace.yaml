@@ -1,0 +1,21 @@
+# Workspace module map.
+#
+# Maps a module path to a local directory so codegen can resolve a spec from a
+# sibling checkout instead of the network. A local checkout always wins. The
+# version tag is the remote fallback.
+version: "1"
+
+modules:
+  github.com/alexandremahdhaoui/poe-trader-spec:
+    path: ./poe-trader-spec
+    version: v0.1.0
+    specs:
+      - spec/poe-trader.v1.yaml
+
+  github.com/alexandremahdhaoui/poe-trader-data:
+    path: ./poe-trader-data
+    version: v0.1.0
+    specs:
+      - data/items.ndjson
+      - data/stats.ndjson
+      - data/client_strings.json

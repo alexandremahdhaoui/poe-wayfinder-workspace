@@ -1,0 +1,23 @@
+name: poe-trader-workspace
+
+artifactStorePath: .forge/artifact-store.yaml
+
+# The workspace root files live here under version control, then get copied to
+# the workspace root. The root itself is not a git repo, so without this repo
+# those files belong to nobody.
+build:
+  - name: sync
+    src: ./workspace
+    engine: go://generic-builder
+    spec:
+      command: sh
+      args: ["-c", "sh hack/sync.sh .."]
+
+test:
+  # Catch a repo that was added to the workspace and forgotten in go.work or
+  # the Cargo members list. That failure is otherwise confusing and late.
+  - name: validate
+    runner: go://generic-test-runner
+    spec:
+      command: sh
+      args: ["-c", "sh hack/validate.sh"]
