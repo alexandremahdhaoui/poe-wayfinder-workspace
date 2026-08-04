@@ -17,3 +17,5 @@ mockall = "0.15"
 # Linux build, which is where every test runs, never sees them.
 arboard = "3"
 windows = "0.62"
+eframe = { version = "0.32", default-features = false, features = ["glow"] }
+egui = "0.32"
