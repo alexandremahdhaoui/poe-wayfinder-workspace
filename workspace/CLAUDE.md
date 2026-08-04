@@ -27,6 +27,24 @@ holds the allowlist and refuses everything else.
 
 **The rate limiter is not optional.** GGG bans for violations. See STUDY 2.
 
+## Parity is measured, not claimed
+
+```sh
+cd poe-trader-app && forge test run parity
+```
+
+It reports what fraction of the reference is ported and lists every missing
+function by reference file. The floor in `forge.yaml` only ever goes up.
+
+Raise it when you land work. That is how the port stops being a claim and
+becomes a measurement.
+
+A rename goes in `ALIASES`. A deliberate omission goes in `WAIVED` with a
+reason. Anything else is a gap and shows up as one.
+
+**Do not report progress without running it.** Eyeballing parity with greps
+produced confident wrong answers more than once.
+
 ## Repos
 
 | Repo | Owns |
