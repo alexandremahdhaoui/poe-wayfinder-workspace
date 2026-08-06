@@ -36,8 +36,14 @@ cd poe-trader-app && forge test run parity
 It reports what fraction of the reference is ported and lists every missing
 function by reference file. The floor in `forge.yaml` only ever goes up.
 
-Raise it when you land work. That is how the port stops being a claim and
-becomes a measurement.
+**It reads 100% as of the port's completion.** The floor is pinned there, so
+any new reference function shows up as a failing test rather than as a number
+quietly drifting down.
+
+100% counts functions, not behaviour. An alias must point at a real
+implementation of the same thing. Four aliases were stretches when first
+written and were replaced with actual ports rather than left to inflate the
+number.
 
 A rename goes in `ALIASES`. A deliberate omission goes in `WAIVED` with a
 reason. Anything else is a gap and shows up as one.
