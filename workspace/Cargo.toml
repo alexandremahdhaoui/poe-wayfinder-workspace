@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["poe-trader-core", "poe-trader-app"]
+members = ["poe-trader-core", "poe-trader-data", "poe-trader-app"]
 
 # Shared dependency versions keep every crate in the workspace consistent.
 # Bump here and never in a member crate.

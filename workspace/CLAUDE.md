@@ -97,3 +97,239 @@ passes with neither, so a fresh checkout still builds.
 | poe-trader-app | adapters, drivers, binaries |
 
 `golden-configgen` from the playground workspace is reused unchanged.
+
+## Running it with nothing
+
+`poe-trader.exe` takes no arguments. Copy it anywhere and start it.
+
+- **The game data is inside it.** `poe-trader-data` is a crate whose `src/lib.rs`
+  is `include_bytes!` over `data/<game>/*.ndjson`, both games, about 5.5 MB. The
+  exe is 27 MB instead of 22 MB and needs no folder beside it.
+- **`--data-dir` is an override, not a requirement.** A directory named there
+  always wins, and a bad one is a startup failure rather than a silent
+  fallback, because the user asked for that directory by name.
+- **`--game` defaults to `auto`.** The overlay reads the open window titles and
+  keeps reading them. Alt tab from PoE2 to PoE1 and the parser, the trade
+  endpoint, the window it attaches to and the Client.txt it tails all follow.
+  Naming a game or a `--window-title` pins it and stops the following.
+- **The league is learned.** `--client-log-path` defaults to the first
+  `Client.txt` found in the usual install locations, per game.
+- **POESESSID is not needed.** It stays a config key for people who want it.
+
+Precedence for the data is `--data-dir`, then the refreshed cache in the config
+directory, then the copy built into the binary. The origin is on the
+`loaded the game data` log line, so a support question is answerable from a log.
+
+`--config-dir` defaults to `%APPDATA%\poe-trader`. It was `.` which, for a
+double clicked exe, is whatever directory Explorer happened to start it in.
+
+### The refresh
+
+On start, any game whose cache is more than seven days old is refreshed on a
+background thread. Three requests per game to
+`www.pathofexile.com/api/trade*/data/{stats,items,static}`, GGG's own endpoints,
+already on the allowlist. It never blocks startup and the result is used from
+the next launch. The tray's **Rebuild data** forces it now, instead of failing
+because `poe-trader-datagen.exe` is not shipped beside the overlay.
+
+`augments.ndjson` cannot be refreshed. It comes from the game bundles and no API
+serves it, so the built in copy is the only source and a refresh must not delete
+it. `resolve` puts the built in augments back when a cache has none.
+
+### The substring trap
+
+`"Path of Exile 2"` contains `"Path of Exile"`. Detection is exact equality
+after trimming, in `core::controller::game_detect`. Never `contains`, never
+`starts_with`. The foreground window decides when both games are open.
+
+## Running it on Windows
+
+`cd poe-trader-app && bash hack/deploy.sh` writes
+`poe-trader-<commit>-<hash>.exe` to `$WIN_OUTPUT_PATH`. Never overwrite a
+working exe. Smart App Control allows by hash and Rust builds are not
+reproducible, so an allowed binary cannot be recovered.
+
+SAC blocks most new unsigned builds. From WSL the symptom is
+`Invalid argument`. From PowerShell it is
+`An Application Control policy has blocked this file`. Rebuild and redeploy
+until one clears. Roughly one in three does.
+
+Signing: self signed does not work. SAC needs a cert chaining to the Microsoft
+Root Program. Azure Artifact Signing is $9.99/mo but individual onboarding is
+paused and limited to US and Canada orgs. Sectigo Individual Validation at
+about $220/yr plus a hardware token is the only route open from France.
+
+## Cleaning up
+
+`cd poe-trader-app && bash hack/cleanup.sh` reports and removes nothing.
+`--yes` acts. `--keep N` sets how many deployed exes survive, newest first,
+default 3. `--builds` also drops the 8G cargo target directory.
+
+It refuses to remove an exe that a `.cmd` in the deploy directory launches,
+because `run-live.cmd` names one build by hash and deleting it breaks the
+launcher silently. It never touches `golden-*.exe`, `data*/`, any `.cmd`, or
+any log that is not from press-check.
+
+`forge build poe-trader-windows` writes `poe-trader.exe` into the deploy
+directory and `deploy.sh` then copies it to a hashed name, so there are always
+two files per build and only the hashed one accumulates.
+
+**Other overlays fight ours.** Discord Overlay and NVIDIA GeForce Overlay both
+run as always-on-top windows. When the panel flickers or sits behind the game,
+check those before suspecting this code.
+
+## Testing without the game
+
+`hack/press-check.sh <exe> [data-dir] [game] [item-file]` runs the whole price
+check with nobody at the keyboard: press, copy, parse, filter, search.
+
+It works because `--fake-game` opens a window with the game's title that
+answers Ctrl+C with item text. That is the whole contract the overlay has with
+the game. The stand-in lives in the main binary because SAC blocks new ones.
+
+Other flags: `--self-test-hook`, `--press-hotkey`, `--list-windows`,
+`--check-clipboard`.
+
+`hack/both-games-check.sh <exe>` opens a stand-in for **each** game at once and
+starts the overlay with no arguments. It asserts the exe starts bare, holds both
+tables, follows the foreground window, and that the follow reaches the trade
+API. That last one is the point: flipping a `GameVersion` while the price
+controller keeps its old `TradeUrls` looks perfect in a log and searches the
+wrong endpoint. That exact bug was live for `league`.
+
+`hack/refresh-check.sh <exe>` runs three launches: one that fetches, one that
+must read the cache and must NOT fetch again, and one against a deliberately
+corrupted cache that must fall back rather than refuse to start.
+
+A low level keyboard hook sees injected input. `RegisterHotKey` does not, which
+is why the hook is what makes the press path testable. Both watch the hotkey.
+
+## Windows traps, all measured
+
+- Windows never repaints a hidden window. eframe runs the frame loop from a
+  repaint, so hiding the overlay stops the loop and kills the hotkey. Park it
+  off screen instead.
+- egui coordinates are logical points. Win32 reports physical pixels. At 150%
+  a right anchored panel lands off screen. Divide by the scale factor.
+- Moving a window also reorders it, so always-on-top is re-asserted every
+  frame, not set once.
+- `RegisterHotKey` and the hook both report one press, a frame apart. Coalesce
+  or every check costs two searches.
+- PoE2 needs borderless windowed. Exclusive fullscreen blocks any overlay.
+
+## Trade API traps
+
+- Property filters are `item.armour`, `item.evasion_rating`,
+  `item.energy_shield`, never `pseudo.pseudo_total_*`.
+- They must not travel in `stats`. The answer is
+  `Unsupported stat domain provided`.
+- PoE2 groups them under `equipment_filters`. PoE1 splits them into
+  `armour_filters` and `weapon_filters`. The wrong shape is refused outright.
+- `rune_sockets`, `spirit`, `reload_time` are PoE2 only.
+- Guarded by `poe-trader-core/tests/upstream_property_ids.rs`, which reads the
+  ids out of both reference checkouts.
+- thiserror Display prints only the outermost message. Render the chain with
+  `util::error_chain::render` or the cause is lost.
+
+## Overlay UX, ported from the reference
+
+`core::controller::overlay_lifecycle` holds the state machine, from
+`WidgetAreaTracker.ts` and `OverlayVisibility.ts`:
+
+- opens not interactive, so the first click still reaches the game
+- mouse moves more than ~38px from where you pressed, it closes
+- mouse enters the panel, it becomes interactive
+- mouse leaves it, the game gets clicks back
+- holding the hotkey's modifier suppresses the close
+- Alt alone hides everything after 85ms interactive, 275ms watching, because
+  Alt is the game's show-modifiers key
+- Escape and click outside close it
+
+## UI parity is measured too
+
+```sh
+cd poe-trader-app && forge test run uiparity
+```
+
+`poe-trader-uiparity` holds a catalogue of what the user can do, each entry
+naming the upstream `.vue` it came from. An entry counts only when **both**
+halves are present: domain code somewhere in the workspace, and a symbol used
+inside `src/driver/`. Domain code nobody can reach does not count.
+
+The floor is 100. Ten entries are waived, each with a reason: everything that
+needs a third party or a CDN image.
+
+Function parity read 100% while half the panel was missing, because a ported
+function nobody calls still counts as ported. This stage is what catches that.
+
+## No unwired code
+
+The `architecture` stage fails on any `pub fn` that no production code calls.
+It reads both crates. 19 ported functions were dead when the rule was added.
+Every one was wired into real behaviour rather than deleted, because deleting
+them would have dropped function parity below 100.
+
+A helper used only inside its own file should not be `pub`. A helper used
+nowhere is either wired or it is a parity fiction.
+
+## The filter panel
+
+`core::controller::filter_view` is the editable view of a `TradeQuery`, ported
+from `FiltersBlock.vue`, `FilterModifier.vue` and `FilterBtnNumeric.vue`.
+
+`build(check)` turns a `PriceCheck` into rows. `apply(view, query)` folds the
+edits back. Both are pure, so the whole filter block is unit tested without a
+window.
+
+Three kinds of row:
+
+- **stat**, one per trade filter, labelled with the line the game printed,
+  carrying the roll and the bounds of its tier
+- **numeric**, one per item property the trade site can filter on, offered even
+  when nothing constrains it yet so the user can turn it on
+- **flag**, corrupted, mirrored, veiled and the rest. Left click toggles it,
+  right click flips it to "not"
+
+A row that is off writes an empty range rather than being dropped, so turning
+it back on restores what it had.
+
+Labels and rolls come from `StatFilters::sources`, filled in by
+`build_stat_filters` at the same place each filter is built. The trade id alone
+cannot be turned back into readable text, so anything that adds a filter must
+add its source beside it or the row shows a raw id.
+
+`press-check.sh` asserts `stat_rows` on the `price check finished` line. A panel
+that finishes with no rows is a panel nobody can adjust, and no unit test sees
+it. Its item files live in `hack/items/` and are copied next to the exe.
+
+## The item editor
+
+`core::controller::item_editor` sockets a rune or soul core into the item
+before searching, from `ItemEditor.vue`. `preview_filters` raises the filter the
+augment would grant, `FilterEdit` keeps the original so it can be taken back off.
+
+The augment data is not in GGG's API. It comes from the game bundles, which is
+what the reference generates with its Python pipeline. `poe-trader-datagen
+--augments-only <data-dir>` reads the reference checkout and writes
+`augments.ndjson`. 253 records. Without that file the picker offers nothing and
+everything else still works.
+
+The filter id is the **trade id**, never the stat text. `AugmentEffect` carries
+both because the text is what the user reads and the id is what the site
+searches.
+
+An item whose sockets already hold runes has no empty socket, so it is offered
+nothing. That is why the harness has `item-runable.txt`, the same armour with
+the rune line removed.
+
+## Prices without a third party
+
+`core::controller::price_summary` computes the estimate from the listings the
+trade site already returned. Median of the most common currency, with prices
+more than 4x the median dropped once there are at least five of them.
+
+Upstream's prediction calls poeprices.info. This needs no one.
+
+The listings come from the fetch endpoint for a search, and from the search
+response itself for an exchange, because a bulk exchange returns its offers
+inline. Getting that wrong showed as currency having a count but no price.

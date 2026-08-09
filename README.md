@@ -39,3 +39,18 @@ The validate stage fails if you skip step 2 or 3.
 `go.work` maps Go modules. `workspace.yaml` maps any module to a directory so
 `resolve-spec.sh` can find a spec in a sibling checkout instead of over the
 network. A local checkout always wins. The version tag is the fallback.
+
+## sync.sh copies one direction only
+
+`hack/sync.sh` copies `workspace/` **to** the workspace root. It never reads the
+root back. Edit a root file in place and the change is untracked, and the next
+sync silently destroys it.
+
+Edit `workspace/<file>` and sync down, or copy the root file back up before
+committing:
+
+```sh
+cp ../CLAUDE.md ../Cargo.toml workspace/
+```
+
+This has already cost one session's documentation once.
