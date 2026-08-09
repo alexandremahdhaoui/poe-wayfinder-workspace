@@ -1,6 +1,6 @@
-# poe-trader-workspace
+# poe-wayfinder-workspace
 
-Owns the files that sit at the root of the `poe-trader` workspace.
+Owns the files that sit at the root of the `poe-wayfinder` workspace.
 
 The workspace root is not a git repo. Without this repo, `Cargo.toml`,
 `go.work` and `workspace.yaml` would belong to nobody and drift silently.
@@ -25,7 +25,7 @@ That copies `workspace/*` to `..`. Run it after adding a repo.
 
 ## Adding a repo
 
-1. Clone it into `~/workspaces/poe-trader/`.
+1. Clone it into `~/workspaces/poe-wayfinder/`.
 2. Add it to `workspace/Cargo.toml` members if it is Rust.
 3. Add it to `workspace/go.work` if it is Go.
 4. Add it to `workspace/workspace.yaml` if anything resolves specs from it.

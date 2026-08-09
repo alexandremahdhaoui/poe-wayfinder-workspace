@@ -6,14 +6,14 @@
 version: "1"
 
 modules:
-  github.com/alexandremahdhaoui/poe-trader-spec:
-    path: ./poe-trader-spec
+  github.com/alexandremahdhaoui/poe-wayfinder-spec:
+    path: ./poe-wayfinder-spec
     version: v0.1.0
     specs:
-      - spec/poe-trader.v1.yaml
+      - spec/poe-wayfinder.v1.yaml
 
-  github.com/alexandremahdhaoui/poe-trader-data:
-    path: ./poe-trader-data
+  github.com/alexandremahdhaoui/poe-wayfinder-data:
+    path: ./poe-wayfinder-data
     version: v0.1.0
     specs:
       - data/items.ndjson

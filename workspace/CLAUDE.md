@@ -1,4 +1,4 @@
-# CLAUDE.md — poe-trader workspace
+# CLAUDE.md — poe-wayfinder workspace
 
 A Rust overlay for Path of Exile 1 and 2. A port of Awakened PoE Trade and
 Exiled Exchange 2.
@@ -20,7 +20,7 @@ line reference into the reference checkouts under `reference/`.
 its allowlist. That is the fork maintainer's own server. We never use it.
 
 **No Python.** The reference data pipeline is 7623 lines of Python. It ports
-to Rust in `poe-trader-app/src/bin/poe-trader-datagen.rs`.
+to Rust in `poe-wayfinder-app/src/bin/poe-wayfinder-datagen.rs`.
 
 **One socket.** Every outbound request goes through `http_adapter.rs` which
 holds the allowlist and refuses everything else.
@@ -30,7 +30,7 @@ holds the allowlist and refuses everything else.
 ## Parity is measured, not claimed
 
 ```sh
-cd poe-trader-app && forge test-all
+cd poe-wayfinder-app && forge test-all
 ```
 
 Three parity stages, one per part of the two references. Each reports what
@@ -63,7 +63,7 @@ produced confident wrong answers more than once.
 ## The data is measured too
 
 ```sh
-cd poe-trader-app && forge test run datacheck
+cd poe-wayfinder-app && forge test run datacheck
 ```
 
 Parity counts functions. `datacheck` counts stats and bases, which is what a
@@ -83,26 +83,26 @@ The empty table check is separate on purpose. 873 gems were filed under `ITEM`,
 so a gem-shaped clipboard still found them there and coverage read 100 percent
 while the gem table sat empty.
 
-It needs `data-poe1/` and `data-poe2/`, built by `poe-trader-datagen`. It
+It needs `data-poe1/` and `data-poe2/`, built by `poe-wayfinder-datagen`. It
 passes with neither, so a fresh checkout still builds.
 
 ## Repos
 
 | Repo | Owns |
 |---|---|
-| poe-trader-workspace | the workspace root files |
-| poe-trader-spec | config keys and network policy |
-| poe-trader-data | the built ndjson |
-| poe-trader-core | the domain. No I/O. |
-| poe-trader-app | adapters, drivers, binaries |
+| poe-wayfinder-workspace | the workspace root files |
+| poe-wayfinder-spec | config keys and network policy |
+| poe-wayfinder-data | the built ndjson |
+| poe-wayfinder-core | the domain. No I/O. |
+| poe-wayfinder-app | adapters, drivers, binaries |
 
 `golden-configgen` from the playground workspace is reused unchanged.
 
 ## Running it with nothing
 
-`poe-trader.exe` takes no arguments. Copy it anywhere and start it.
+`poe-wayfinder.exe` takes no arguments. Copy it anywhere and start it.
 
-- **The game data is inside it.** `poe-trader-data` is a crate whose `src/lib.rs`
+- **The game data is inside it.** `poe-wayfinder-data` is a crate whose `src/lib.rs`
   is `include_bytes!` over `data/<game>/*.ndjson`, both games, about 5.5 MB. The
   exe is 27 MB instead of 22 MB and needs no folder beside it.
 - **`--data-dir` is an override, not a requirement.** A directory named there
@@ -120,7 +120,7 @@ Precedence for the data is `--data-dir`, then the refreshed cache in the config
 directory, then the copy built into the binary. The origin is on the
 `loaded the game data` log line, so a support question is answerable from a log.
 
-`--config-dir` defaults to `%APPDATA%\poe-trader`. It was `.` which, for a
+`--config-dir` defaults to `%APPDATA%\poe-wayfinder`. It was `.` which, for a
 double clicked exe, is whatever directory Explorer happened to start it in.
 
 ### The refresh
@@ -130,7 +130,7 @@ background thread. Three requests per game to
 `www.pathofexile.com/api/trade*/data/{stats,items,static}`, GGG's own endpoints,
 already on the allowlist. It never blocks startup and the result is used from
 the next launch. The tray's **Rebuild data** forces it now, instead of failing
-because `poe-trader-datagen.exe` is not shipped beside the overlay.
+because `poe-wayfinder-datagen.exe` is not shipped beside the overlay.
 
 `augments.ndjson` cannot be refreshed. It comes from the game bundles and no API
 serves it, so the built in copy is the only source and a refresh must not delete
@@ -144,8 +144,8 @@ after trimming, in `core::controller::game_detect`. Never `contains`, never
 
 ## Running it on Windows
 
-`cd poe-trader-app && bash hack/deploy.sh` writes
-`poe-trader-<commit>-<hash>.exe` to `$WIN_OUTPUT_PATH`. Never overwrite a
+`cd poe-wayfinder-app && bash hack/deploy.sh` writes
+`poe-wayfinder-<commit>-<hash>.exe` to `$WIN_OUTPUT_PATH`. Never overwrite a
 working exe. Smart App Control allows by hash and Rust builds are not
 reproducible, so an allowed binary cannot be recovered.
 
@@ -161,7 +161,7 @@ about $220/yr plus a hardware token is the only route open from France.
 
 ## Cleaning up
 
-`cd poe-trader-app && bash hack/cleanup.sh` reports and removes nothing.
+`cd poe-wayfinder-app && bash hack/cleanup.sh` reports and removes nothing.
 `--yes` acts. `--keep N` sets how many deployed exes survive, newest first,
 default 3. `--builds` also drops the 8G cargo target directory.
 
@@ -170,7 +170,7 @@ because `run-live.cmd` names one build by hash and deleting it breaks the
 launcher silently. It never touches `golden-*.exe`, `data*/`, any `.cmd`, or
 any log that is not from press-check.
 
-`forge build poe-trader-windows` writes `poe-trader.exe` into the deploy
+`forge build poe-wayfinder-windows` writes `poe-wayfinder.exe` into the deploy
 directory and `deploy.sh` then copies it to a hashed name, so there are always
 two files per build and only the hashed one accumulates.
 
@@ -216,6 +216,11 @@ is why the hook is what makes the press path testable. Both watch the hotkey.
 - `RegisterHotKey` and the hook both report one press, a frame apart. Coalesce
   or every check costs two searches.
 - PoE2 needs borderless windowed. Exclusive fullscreen blocks any overlay.
+- A windows subsystem exe launched from WSL detaches from the interop proxy, so
+  `timeout` kills the proxy and the Windows process runs on forever. Every
+  harness kills `poe-wayfinder*` on entry AND from a `trap ... EXIT`. Without
+  the trap one orphan reached 26900 frames against a 120 second timeout, and a
+  leftover overlay owns the hotkey and answers the next run's press itself.
 
 ## Trade API traps
 
@@ -226,7 +231,7 @@ is why the hook is what makes the press path testable. Both watch the hotkey.
 - PoE2 groups them under `equipment_filters`. PoE1 splits them into
   `armour_filters` and `weapon_filters`. The wrong shape is refused outright.
 - `rune_sockets`, `spirit`, `reload_time` are PoE2 only.
-- Guarded by `poe-trader-core/tests/upstream_property_ids.rs`, which reads the
+- Guarded by `poe-wayfinder-core/tests/upstream_property_ids.rs`, which reads the
   ids out of both reference checkouts.
 - thiserror Display prints only the outermost message. Render the chain with
   `util::error_chain::render` or the cause is lost.
@@ -248,10 +253,10 @@ is why the hook is what makes the press path testable. Both watch the hotkey.
 ## UI parity is measured too
 
 ```sh
-cd poe-trader-app && forge test run uiparity
+cd poe-wayfinder-app && forge test run uiparity
 ```
 
-`poe-trader-uiparity` holds a catalogue of what the user can do, each entry
+`poe-wayfinder-uiparity` holds a catalogue of what the user can do, each entry
 naming the upstream `.vue` it came from. An entry counts only when **both**
 halves are present: domain code somewhere in the workspace, and a symbol used
 inside `src/driver/`. Domain code nobody can reach does not count.
@@ -309,7 +314,7 @@ before searching, from `ItemEditor.vue`. `preview_filters` raises the filter the
 augment would grant, `FilterEdit` keeps the original so it can be taken back off.
 
 The augment data is not in GGG's API. It comes from the game bundles, which is
-what the reference generates with its Python pipeline. `poe-trader-datagen
+what the reference generates with its Python pipeline. `poe-wayfinder-datagen
 --augments-only <data-dir>` reads the reference checkout and writes
 `augments.ndjson`. 253 records. Without that file the picker offers nothing and
 everything else still works.

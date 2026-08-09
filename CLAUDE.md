@@ -1,4 +1,4 @@
-# CLAUDE.md — poe-trader-workspace
+# CLAUDE.md — poe-wayfinder-workspace
 
 Read `~/.claude/CLAUDE.md` then `workspace/CLAUDE.md`. Both apply.
 
@@ -6,7 +6,7 @@ Read `~/.claude/CLAUDE.md` then `workspace/CLAUDE.md`. Both apply.
 
 The version controlled home of the workspace root files.
 
-`~/workspaces/poe-trader/` is not a git repo. `forge build sync` copies
+`~/workspaces/poe-wayfinder/` is not a git repo. `forge build sync` copies
 `workspace/*` up to it.
 
 ## Edit under workspace/ and never at the root
