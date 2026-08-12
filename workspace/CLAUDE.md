@@ -151,8 +151,33 @@ reproducible, so an allowed binary cannot be recovered.
 
 SAC blocks most new unsigned builds. From WSL the symptom is
 `Invalid argument`. From PowerShell it is
-`An Application Control policy has blocked this file`. Rebuild and redeploy
-until one clears. Roughly one in three does.
+`An Application Control policy has blocked this file`. Roughly one in three
+clears.
+
+**Retrying is useless unless the binary actually changes.** `deploy.sh` names
+the file by content hash and cargo will not relink an unchanged tree, so a
+retry loop redeploys the identical blocked exe forever. Five attempts once
+produced the same name five times. `touch` a source file first: the relink
+moves the PE timestamp, which moves the hash.
+
+**`deploy.sh` copies, it does not build.** Build first or you deploy the last
+binary and test nothing.
+
+```sh
+cd poe-wayfinder-app
+for i in 1 2 3 4; do
+    touch src/bin/poe-wayfinder.rs
+    cargo build --release --target x86_64-pc-windows-gnu \
+        -p poe-wayfinder-app --bin poe-wayfinder || break
+    cp ../target/x86_64-pc-windows-gnu/release/poe-wayfinder.exe \
+        "$WIN_OUTPUT_PATH/poe-wayfinder.exe"
+    bash hack/deploy.sh > /tmp/dep.log 2>&1
+    name=$(grep -oE 'poe-wayfinder-[a-z0-9-]*\.exe' /tmp/dep.log | tail -1)
+    (cd "$WIN_OUTPUT_PATH" && ./"$name" --list-windows >/dev/null 2>&1) && break
+done
+```
+
+`--list-windows` is the cheapest thing that proves the exe is allowed to run.
 
 Signing: self signed does not work. SAC needs a cert chaining to the Microsoft
 Root Program. Azure Artifact Signing is $9.99/mo but individual onboarding is
@@ -203,6 +228,38 @@ corrupted cache that must fall back rather than refuse to start.
 
 A low level keyboard hook sees injected input. `RegisterHotKey` does not, which
 is why the hook is what makes the press path testable. Both watch the hotkey.
+
+### The whole suite
+
+```sh
+bash hack/press-check.sh <exe> "" poe2 item.txt
+bash hack/press-check.sh <exe> "" poe1 item-poe1.txt
+bash hack/press-check.sh <exe> "" poe2 item-currency.txt
+bash hack/press-check.sh <exe> "" poe2 item-runable.txt
+bash hack/both-games-check.sh <exe>
+bash hack/refresh-check.sh <exe>
+```
+
+An empty data dir is the normal case: it proves the exe finds its own data.
+Each item file exercises a different path. Currency goes through the exchange
+and has no stat rows, `item-runable.txt` is the only one with an empty rune
+socket, so it is the only one that can prove the item editor works.
+
+press-check asserts the panel is up within 1200ms of the press, using the
+`elapsed_ms` field. That is the assertion that stops the panel drifting back
+behind the network.
+
+Every harness kills `poe-wayfinder*` from a `trap ... EXIT`, so an interrupted
+run cleans up after itself.
+
+### Looking at the UI
+
+`hack/shot.ps1 -Out <path> -Wait <seconds>` captures the screen from WSL. Use
+it rather than shipping a window unseen: the splash shipped twice, once as a
+deadlock and once as a white square, because it was never looked at.
+
+**Check what is on screen before capturing.** One capture caught a live game
+session rather than the overlay.
 
 ## Windows traps, all measured
 
