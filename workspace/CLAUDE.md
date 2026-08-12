@@ -222,6 +222,22 @@ is why the hook is what makes the press path testable. Both watch the hotkey.
   the trap one orphan reached 26900 frames against a 120 second timeout, and a
   leftover overlay owns the hotkey and answers the next run's press itself.
 
+## Editing traps that cost the most time here
+
+**A scripted string replace that does not match fails silently.** `cargo fmt`
+runs in the `format-code` build step and reflows what you were about to match,
+so a `replace()` written against the old wrapping does nothing and the build
+still succeeds. **Grep for the new text after every scripted edit.** Half a
+dozen edits in one session were silently lost this way, including two whole
+match arms.
+
+**Replace by line range, not by long literal**, once a block is bigger than a
+few lines.
+
+**Commit before a wide edit.** One over-wide slice deleted `follow_game` and
+`git show HEAD:<path>` put it straight back. That is the only reason it cost
+minutes rather than an hour.
+
 ## Trade API traps
 
 - Property filters are `item.armour`, `item.evasion_rating`,
