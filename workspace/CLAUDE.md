@@ -411,3 +411,40 @@ Upstream's prediction calls poeprices.info. This needs no one.
 The listings come from the fetch endpoint for a search, and from the search
 response itself for an exchange, because a bulk exchange returns its offers
 inline. Getting that wrong showed as currency having a count but no price.
+
+## The trade API decides what "no filter" means, and it is never what you want
+
+**An empty `have` list on an exchange means "price it in anything".** The trade
+site answered an Orb of Augmentation in tier 3 waystones, so the panel read
+`~99 waystone-3`. `bulk::currencies_to_price_in` names exalted or divine for
+PoE2, chaos or divine for PoE1, and never prices a currency in itself.
+
+**The league must be asked for, not defaulted.** It defaulted to `Standard`
+and the only thing that could change it was `league_from_whisper`, which needs
+a trade whisper in Client.txt. A player who has not been whispered a trade had
+every item priced against Standard, where dead listings sit at absurd prices,
+and nothing in the log said it was a guess. An empty `league` now means "read
+the trade site's own league list"; naming one still pins it.
+
+Both bugs looked like bad prices and were bad requests. **Log the request
+before blaming the answer.**
+
+## Windows deploy loop, two ways it wastes minutes
+
+**A running overlay holds the exe.** `cp` onto it fails with
+`Permission denied`. Kill `poe-wayfinder*` before deploying, every time.
+
+**`hack/deploy.sh` and the relink loop only work from `poe-wayfinder-app/`.**
+Run them from the workspace root and `touch src/bin/poe-wayfinder.rs` fails,
+so cargo never relinks, so the hash never changes, so the retry loop redeploys
+the same blocked binary until it gives up.
+
+## Never compute screen coordinates in a harness
+
+The rect on a log line is in **logical points**. `--move-mouse` takes logical
+coordinates and scales them by the real DPI. Aiming at a logged rect centre of
+1282,912 put the cursor at 1923,1368 on a 150% display.
+
+Prefer an assertion that needs no pointer at all. The locked hotkey
+(`Ctrl+Alt+D`) focuses the panel deliberately, with no mouse involved, which is
+the deterministic way to reproduce a focus bug.
