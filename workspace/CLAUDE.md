@@ -486,3 +486,43 @@ coordinates and scales them by the real DPI. Aiming at a logged rect centre of
 Prefer an assertion that needs no pointer at all. The locked hotkey
 (`Ctrl+Alt+D`) focuses the panel deliberately, with no mouse involved, which is
 the deterministic way to reproduce a focus bug.
+
+## cargo test is not the gate. forge test-all is.
+
+Three stages were red on a commit that had passed `cargo test --workspace`
+and the Windows cross build. `lint`, `architecture` and `uiparity` all failed
+and none of them runs under cargo. **Run `forge test-all` in every touched repo
+before saying anything is done.** The rule was already written down. It was
+skipped because the tests were green, which is exactly when it feels safe.
+
+**Deleting a function can break two stages at once.** Removing `fn checkbox`
+stranded `roll_caption` with no production caller, which failed `architecture`,
+and left the uiparity catalogue naming a symbol that no longer existed, which
+failed `uiparity`. Grep for the name of anything you delete, in `src/` and in
+`poe-wayfinder-uiparity.rs`.
+
+**Fixing a sentinel at one call site moves it, it does not close it.** The
+`f64::INFINITY as i64` fix landed on `overlay_ui_driver::format_value` while
+`filter_view::modifier_text` renders the line the user actually reads, and kept
+printing `9223372036854775807`. Fix the cast everywhere it appears, then grep
+for `as i64`, `as usize` and `as u32` on a float to prove it.
+
+## A harness that has never been run is not a test
+
+`press_until` could never return true, so `focus-check` and `exchange-check`
+failed on every run. Both were written, reviewed and committed without once
+being executed.
+
+```sh
+count=$(grep -c "$needle" "$log")     # prints 0 AND exits 1 when nothing matches
+count=$(grep -c "$needle" "$log" || echo 0)   # so this yields "0\n0"
+```
+
+The two line string then aborts every `[ "$a" -gt "$b" ]` with
+`integer expected` and return code 2, which reads as false forever. Use
+`count=${count:-0}` and never `|| echo 0` after `grep -c`.
+
+**Assert on the wire, not on a re-derivation.** `exchange-check` reads a log
+field that the driver computes by calling the same function the request
+builder calls, separately. Delete the argument from the request and every
+assertion still passes.
