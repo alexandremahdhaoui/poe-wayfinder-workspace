@@ -27,6 +27,13 @@ what it costs and what breaks without it, and wait. A host nobody agreed to is
 a dependency on someone else's server and a change to what this app tells the
 world about its users.
 
+**filterblade.xyz is settled: local only, permanently.** The user decided on
+2026-08-14. We never call it and we never ask its maintainer. FilterBlade
+publishes no API, and its terms require explicit permission to redistribute or
+modify. Loot filters are local files, so nothing needs it: `/itemfilter <name>`
+switches filters in both games and the filter directory is the one
+`game_config_adapter` already resolves.
+
 **Working out a private API from a site's frontend is not research.** Do not
 fetch JavaScript bundles to extract endpoints and do not probe undocumented
 paths. Read what a project publishes: documentation, source, licence, terms.
@@ -245,13 +252,20 @@ is why the hook is what makes the press path testable. Both watch the hotkey.
 ### The whole suite
 
 ```sh
-bash hack/press-check.sh <exe> "" poe2 item.txt
-bash hack/press-check.sh <exe> "" poe1 item-poe1.txt
-bash hack/press-check.sh <exe> "" poe2 item-currency.txt
-bash hack/press-check.sh <exe> "" poe2 item-runable.txt
-bash hack/both-games-check.sh <exe>
-bash hack/refresh-check.sh <exe>
+bash hack/check-all.sh <exe>
 ```
+
+Nine harnesses in order, keeps going after a failure, exits with the number
+that failed. It refuses to start when a real Path of Exile window is open,
+because the harnesses open stand-ins carrying the game's own title and inject
+keys at whatever holds the foreground. `--anyway` overrides that, `--only NAME`
+runs one.
+
+It kills leftover overlays between harnesses as well as before. Each harness
+traps for itself, but a harness killed from outside never reaches its own trap.
+
+Read the exit code from `PIPESTATUS[0]`, never `$?`, when a harness is piped
+through `tee`. `$?` is tee's and is always 0, which makes every harness pass.
 
 An empty data dir is the normal case: it proves the exe finds its own data.
 Each item file exercises a different path. Currency goes through the exchange
@@ -262,8 +276,19 @@ press-check asserts the panel is up within 1200ms of the press, using the
 `elapsed_ms` field. That is the assertion that stops the panel drifting back
 behind the network.
 
-Every harness kills `poe-wayfinder*` from a `trap ... EXIT`, so an interrupted
-run cleans up after itself.
+Every harness kills `poe-wayfinder*` on entry AND from a `trap ... EXIT`, so an
+interrupted run cleans up after itself. `hack/harness.sh` holds that, the
+bounded waits and the shared assertions, so the rules live in one copy.
+
+**`hack/harness-lint.sh` is the one gate worth automating.** It is hermetic,
+needs no Windows and no network, and runs in a second. It checks every message
+a harness greps for still exists in the Rust source. Rename a log line and
+every assertion built on it silently becomes a grep for a string that cannot
+appear, and the suite goes green while testing nothing.
+
+**No end-to-end harness belongs in `forge test-all`.** They need a Windows host,
+six of them hit GGG, and the rate limiter is not optional. A gate that fires
+them on every change is a ban risk.
 
 ### Looking at the UI
 
