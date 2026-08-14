@@ -17,7 +17,20 @@ line reference into the reference checkouts under `reference/`.
 **English only.** `www.pathofexile.com` and nothing else. No regional domains.
 
 **No private third party.** The reference ships `api.exiledexchange2.dev` in
-its allowlist. That is the fork maintainer's own server. We never use it.
+its allowlist. That is the fork maintainer's own server. We never use it. It
+stays banned. This is not reconsidered.
+
+**Only the user adds a host to the allowlist.** Never widen the allowlist,
+never add an outbound host, and never design a feature whose core needs one,
+without the user approving that specific host by name first. Propose it, name
+what it costs and what breaks without it, and wait. A host nobody agreed to is
+a dependency on someone else's server and a change to what this app tells the
+world about its users.
+
+**Working out a private API from a site's frontend is not research.** Do not
+fetch JavaScript bundles to extract endpoints and do not probe undocumented
+paths. Read what a project publishes: documentation, source, licence, terms.
+"They did not document it" is an answer, not an obstacle.
 
 **No Python.** The reference data pipeline is 7623 lines of Python. It ports
 to Rust in `poe-wayfinder-app/src/bin/poe-wayfinder-datagen.rs`.
