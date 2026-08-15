@@ -8,9 +8,18 @@ Price check an item fast. Read the answer. Adjust it. Never fight the overlay.
 ## Now
 
 - [ ] Switch league and game from the UI, with no restart. Agent building it.
-- [ ] Research controller support for price check shortcuts. Agent running.
+- [ ] Decide controller support. Research is done in `docs/controllers/`.
+      Copying works on a pad. Gamepad input cannot be swallowed. Steam Input
+      is the recommendation and needs no code.
 
 ## Next
+
+- [ ] Hold the show mods key while copying. `keys_to_hold_for_copy` and
+      `show_mods_key` are ported, tested, and called by nothing. The overlay
+      reads the key, logs it, then never holds it. Every price check loses
+      roll ranges, for every player. Found 2026-08-15.
+- [ ] Fix the `architecture` stage blind spot that hid it. A name written as
+      a string in the parity alias table counts as a caller.
 
 - [ ] Run `bash hack/check-all.sh <exe>` on Windows with the game closed.
       No harness has ever run end to end. Two shipped permanently broken.
