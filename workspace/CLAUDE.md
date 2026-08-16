@@ -7,10 +7,14 @@ Read ~/.claude/CLAUDE.md first. Those rules apply here.
 
 ## Read before touching anything
 
-`STUDY.md` at the workspace root. 676 lines. Every claim carries a file and
-line reference into the reference checkouts under `reference/`.
+The reference checkouts under `reference/`. They are the source of every
+claim in this file and the only place a behaviour can be checked against what
+the references actually do.
 
-`DESIGN.md` maps every reference file to its Rust destination.
+`STUDY.md` and `DESIGN.md` may sit at the workspace root. They are notes from
+the first read of those references, deliberately untracked, and DESIGN.md
+describes a plan the code moved past. Neither is required and neither is
+authority. The CLAUDE.md files are.
 
 ## Hard rules for this workspace
 
@@ -45,7 +49,11 @@ to Rust in `poe-wayfinder-app/src/bin/poe-wayfinder-datagen.rs`.
 **One socket.** Every outbound request goes through `http_adapter.rs` which
 holds the allowlist and refuses everything else.
 
-**The rate limiter is not optional.** GGG bans for violations. See STUDY 2.
+**The rate limiter is not optional.** GGG bans for violations. It is server
+driven: `x-rate-limit-rules` names the active rules and each carries
+`max:window:penalty` triplets, so the client reshapes itself to match. Every
+window is padded by `api_latency_seconds` because a client that thinks a window
+expired before the server does gets a 429.
 
 ## Parity is measured, not claimed
 
