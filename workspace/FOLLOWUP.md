@@ -27,13 +27,12 @@ Price check an item fast. Read the answer. Adjust it. Never fight the overlay.
 
 Delete an entry here once the user confirms it works in the game.
 
-- [ ] A controller chord fires the price check, from an Xbox pad or a
-      DualSense. Built 2026-08-16, off by default,
-      `--gamepad-chord "L1+R1+Triangle"`. No real pad has ever held it.
-      Hardware arrives 2026-08-17: follow
-      `poe-wayfinder-app/docs/controllers/hardware-session.md` in order.
-      The open question is which chord PoE2 itself ignores, because Windows
-      cannot hide a pad button from the game.
+- [ ] The pad drives the panel end to end in a real game. A DualSense was
+      confirmed on 2026-08-17: enumerated, every button decoded, the chord
+      fired, the panel navigated, closed and handed the game back. What is
+      unconfirmed is a whole session in PoE2 with the game reacting to the
+      same buttons.
+- [ ] The DualShock 4 path. Written from SDL, never run. Nobody here has one.
 - [ ] Panel stays put and its buttons take clicks.
 - [ ] League and game swap from the status window with no restart.
 - [ ] A filter row switches off and stays off.
@@ -51,6 +50,8 @@ Delete an entry here once the user confirms it works in the game.
 
 ## Decided
 
+- L1+R1+Triangle is the default chord, on out of the box. 2026-08-17. The
+  game acts on those buttons too and always will.
 - No third party crate reads a pad. We call hid.dll and setupapi.dll
   ourselves, as hidapi would. 2026-08-16.
 - The XInput adapter was built rather than Steam Input documentation, on
