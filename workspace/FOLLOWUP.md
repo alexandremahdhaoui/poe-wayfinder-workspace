@@ -73,8 +73,6 @@ Delete an entry here once the user confirms it works in the game.
 - No end to end harness in `forge test-all` if it hits GGG or needs the game.
   `windows-smoke` is in because it is hermetic: no network, no game window,
   no key press. 2026-08-16.
-- `STUDY.md` and `DESIGN.md` stay untracked notes at the workspace root. The
-  CLAUDE.md files are the authority and no longer point at them. 2026-08-17.
 - A pad script counts in polls of the frame loop, never in seconds, so a
   harness means the same thing on a slow machine. 2026-08-17.
 - `hack/logo.py` and `png.py` are untracked and stay on disk.

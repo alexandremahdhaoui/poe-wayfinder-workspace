@@ -5,16 +5,13 @@ Exiled Exchange 2.
 
 Read ~/.claude/CLAUDE.md first. Those rules apply here.
 
-## Read before touching anything
+## The CLAUDE.md files are the source of truth
 
-The reference checkouts under `reference/`. They are the source of every
-claim in this file and the only place a behaviour can be checked against what
-the references actually do.
+This one, and the one in each repo. Nothing else is authority. Any loose
+document at the workspace root is a personal note, and a rule that matters
+belongs here instead.
 
-`STUDY.md` and `DESIGN.md` may sit at the workspace root. They are notes from
-the first read of those references, deliberately untracked, and DESIGN.md
-describes a plan the code moved past. Neither is required and neither is
-authority. The CLAUDE.md files are.
+Behaviour is checked against the reference checkouts under `reference/`.
 
 ## Hard rules for this workspace
 
