@@ -7,19 +7,14 @@ Price check an item fast. Read the answer. Adjust it. Never fight the overlay.
 
 ## Now
 
-- [ ] Switch league and game from the UI, with no restart. Agent building it.
-- [ ] Decide controller support. Research is done in `docs/controllers/`.
-      Copying works on a pad. Gamepad input cannot be swallowed. Steam Input
-      is the recommendation and needs no code.
-
-## Next
-
 - [ ] Hold the show mods key while copying. `keys_to_hold_for_copy` and
       `show_mods_key` are ported, tested, and called by nothing. The overlay
       reads the key, logs it, then never holds it. Every price check loses
       roll ranges, for every player. Found 2026-08-15.
 - [ ] Fix the `architecture` stage blind spot that hid it. A name written as
       a string in the parity alias table counts as a caller.
+
+## Next
 
 - [ ] Run `bash hack/check-all.sh <exe>` on Windows with the game closed.
       No harness has ever run end to end. Two shipped permanently broken.
@@ -32,7 +27,15 @@ Price check an item fast. Read the answer. Adjust it. Never fight the overlay.
 
 Delete an entry here once the user confirms it works in the game.
 
+- [ ] A controller chord fires the price check, from an Xbox pad or a
+      DualSense. Built 2026-08-16, off by default,
+      `--gamepad-chord "L1+R1+Triangle"`. No real pad has ever held it.
+      Hardware arrives 2026-08-17: follow
+      `poe-wayfinder-app/docs/controllers/hardware-session.md` in order.
+      The open question is which chord PoE2 itself ignores, because Windows
+      cannot hide a pad button from the game.
 - [ ] Panel stays put and its buttons take clicks.
+- [ ] League and game swap from the status window with no restart.
 - [ ] A filter row switches off and stays off.
 - [ ] Numbers read as numbers. No `9223372036854775807`.
 - [ ] The gauge sets a value by click and by drag.
@@ -48,6 +51,11 @@ Delete an entry here once the user confirms it works in the game.
 
 ## Decided
 
+- No third party crate reads a pad. We call hid.dll and setupapi.dll
+  ourselves, as hidapi would. 2026-08-16.
+- The XInput adapter was built rather than Steam Input documentation, on
+  2026-08-15. Windows cannot hide a pad button from the game and Steam Input
+  takes the pad when it runs. Both accepted. `docs/controllers/scope.md`.
 - filterblade.xyz stays out. Local files only. 2026-08-14.
 - No end to end harness in `forge test-all`. They need Windows and hit GGG.
 - `hack/logo.py` and `png.py` are untracked and stay on disk.
