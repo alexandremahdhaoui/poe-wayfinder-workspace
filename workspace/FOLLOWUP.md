@@ -7,14 +7,6 @@ Price check an item fast. Read the answer. Adjust it. Never fight the overlay.
 
 ## Now
 
-- [ ] Hold the show mods key while copying. `keys_to_hold_for_copy` and
-      `show_mods_key` are ported, tested, and called by nothing. The overlay
-      reads the key, logs it, then never holds it. Every price check loses
-      roll ranges, for every player. Found 2026-08-15.
-- [ ] Fix the `architecture` stage blind spot that hid it. A name written as
-      a string counts as a caller. Hit again on 2026-08-17: `finished()` had
-      no caller and passed, because the checker matched the log line
-      "price check finished". Caught by grepping by hand, not by the gate.
 - [ ] Exclude `unit-windows` and `windows-smoke` from the generated CI. Both
       need a Windows host and WSL interop, so both are green here and red on
       a Linux runner. Added 2026-08-16.
@@ -38,6 +30,12 @@ Price check an item fast. Read the answer. Adjust it. Never fight the overlay.
 ## Waiting on a human
 
 Delete an entry here once the user confirms it works in the game.
+
+- [ ] The five behaviours wired out of dead code on 2026-08-17, none seen in
+      the game: a Price button on a search hit, the maps tab warning about
+      decisions the data no longer has, the line saying what an item gained
+      and lost since the last check, the span on a property row, and a
+      Mageblood asking for the legacies it cannot print.
 
 - [ ] A whole PoE2 session on a pad. Confirmed on 2026-08-17: the DualSense
       enumerated, every button decoded against its own report descriptor, the
@@ -81,3 +79,7 @@ Delete an entry here once the user confirms it works in the game.
 - A pad script counts in polls of the frame loop, never in seconds, so a
   harness means the same thing on a slow machine. 2026-08-17.
 - `hack/logo.py` and `png.py` are untracked and stay on disk.
+- Every public function has a caller as of 2026-08-17. 53 were dead when the
+  `architecture` blind spot was fixed. All are wired, or waived in `WAIVED`
+  with the reason. `likelyFinishedItem` is the last waive: it gates a second
+  search preset we do not offer.
