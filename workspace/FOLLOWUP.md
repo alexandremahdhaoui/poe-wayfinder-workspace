@@ -59,6 +59,11 @@ Delete an entry here once the user confirms it works in the game.
   background thread and a channel. Today it keeps the current league and
   warns.
 - Install `shellcheck` and add it to `hack/harness-lint.sh`. Needs sudo.
+- Stash scroll. Hold Ctrl and roll the wheel to flip stash tabs, skipped when
+  the cursor is over the grid. Dropped 2026-08-17 rather than faked: it needs a
+  WH_MOUSE_LL hook, which sees every wheel event on the desktop, and a
+  stash_scroll config key. The grid test was ported and is now waived in
+  parity. Reopen the whole thing together.
 
 ## Decided
 
