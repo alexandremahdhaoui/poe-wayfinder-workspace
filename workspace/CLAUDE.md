@@ -189,6 +189,14 @@ moves the PE timestamp, which moves the hash.
 **`deploy.sh` copies, it does not build.** Build first or you deploy the last
 binary and test nothing.
 
+**`cargo build --target x86_64-pc-windows-gnu` without `--release` proves the
+code compiles and deploys nothing.** `deploy.sh` copies the release exe. Checking
+a change with a debug cross build and then deploying leaves the release binary
+untouched, so the hash does not move, `deploy.sh` prints the same name as last
+time, and every screenshot after it is of the old build. Four rounds of design
+work were reviewed against a stale exe this way on 2026-08-18. The name repeating
+is the tell, the same one the Smart App Control retry loop gives.
+
 ```sh
 cd poe-wayfinder-app
 for i in 1 2 3 4; do
@@ -304,12 +312,35 @@ them on every change is a ban risk.
 
 ### Looking at the UI
 
-`hack/shot.ps1 -Out <path> -Wait <seconds>` captures the screen from WSL. Use
-it rather than shipping a window unseen: the splash shipped twice, once as a
-deadlock and once as a white square, because it was never looked at.
+Four tools, because a full screen grab is almost never what you want.
+
+| Tool | Gives you |
+|---|---|
+| `hack/shot.ps1 -Out <path> [-Wait n]` | the whole desktop |
+| `hack/shot-window.ps1 -Title <t> -Out <p> [-NoFocus]` | one window, cropped to itself |
+| `hack/shot-panel.sh <exe> [item] [out]` | a stand-in game, a real price check, then a capture |
+| `hack/shot-pad.sh <exe> [pad-file] [out]` | the same driven by a scripted pad, parked on a row |
+
+Use them rather than shipping a window unseen: the splash shipped twice, once as
+a deadlock and once as a white square, because it was never looked at.
 
 **Check what is on screen before capturing.** One capture caught a live game
-session rather than the overlay.
+session rather than the overlay. Another caught a different project's terminal
+and was read as ours for several minutes. `shot-window.ps1` avoids the whole
+class of mistake by cropping to our own window.
+
+**Capture DPI aware or you photograph two thirds of the screen.** PowerShell
+reports `VirtualScreen` in logical points and `CopyFromScreen` works in physical
+pixels, so at 150 percent a full grab silently keeps the top left 1707x1067 of a
+2560x1600 desktop. `SetProcessDPIAware` first.
+
+**`FindWindowW` from PowerShell needs `CharSet = CharSet.Unicode`.** Without it
+P/Invoke marshals ANSI into the wide function and every title misses, which
+reads exactly like the window not existing. `shot-window.ps1` enumerates instead.
+
+**The panel is not the process main window.** `MainWindowHandle` is the parked
+2x2 overlay. Ask for the title: `poe-wayfinder` is the panel, `PoE Wayfinder`
+is the status window.
 
 ## Windows traps, all measured
 
@@ -365,6 +396,26 @@ minutes rather than an hour.
 - thiserror Display prints only the outermost message. Render the chain with
   `util::error_chain::render` or the cause is lost.
 
+## The pad drives the same panel the mouse does
+
+**A button in the opening chord must not also act inside the panel.** The default
+chord is `L1+R1+Triangle` and the panel reads R1 as search. Opening the panel
+fired the chord and then, in the same frame, read R1 as a press inside the panel
+and searched again. The second search folded the filter view back into the query,
+and a disabled row writes an empty range, so every disabled row lost the roll it
+was holding: `29` became `no min`. `read_gamepad` now takes the held mask as its
+own when the chord fires, so those buttons are already down rather than newly
+pressed.
+
+It only showed up because the same item was photographed twice, once with the
+mouse and once with a scripted pad, and the numbers differed. A log line would
+not have said it.
+
+**A mark is only a mark when a pad is connected.** `pad_focus::marks` holds that
+rule. The driver decided it alone and ignored `connected`, so a player with no
+gamepad had row one selected forever. Invisible while the mark was a hairline
+outline, obvious the moment it became a rail.
+
 ## Overlay UX, ported from the reference
 
 `core::controller::overlay_lifecycle` holds the state machine, from
@@ -395,6 +446,11 @@ needs a third party or a CDN image.
 
 Function parity read 100% while half the panel was missing, because a ported
 function nobody calls still counts as ported. This stage is what catches that.
+
+**An entry whose `ui:` names a definition catches nothing.** `fn base_percentile_note`
+matches the function itself, so the capability counted while the panel never drew
+it. That is the fifth time this trap has hidden dead code. Name the call site:
+`base_percentile_note(ui, model)`.
 
 ## No unwired code
 
