@@ -58,7 +58,7 @@ expired before the server does gets a 429.
 cd poe-wayfinder-app && forge test-all
 ```
 
-Three parity stages, one per part of the two references. Each reports what
+Four parity stages, one per part of the two references. Each reports what
 fraction is ported and lists every missing function by file. Every floor is
 pinned at 100 and only ever goes up.
 
@@ -66,6 +66,7 @@ pinned at 100 and only ever goes up.
 |---|---|
 | `parity` | Exiled Exchange 2, the PoE2 reference |
 | `parity-overlay` | Awakened PoE Trade's Electron shell |
+| `parity-widgets` | Exiled Exchange 2's widgets, the panels beside the price check |
 | `parity-poe1` | Awakened PoE Trade's renderer, the PoE1 price check |
 
 **Measure both references or PoE1 rots quietly.** Exiled Exchange 2 is a PoE2
@@ -237,6 +238,12 @@ It works because `--fake-game` opens a window with the game's title that
 answers Ctrl+C with item text. That is the whole contract the overlay has with
 the game. The stand-in lives in the main binary because SAC blocks new ones.
 
+**The stand-in answers Ctrl+C whether or not the show mods key is held.** The
+overlay nests Alt around the copy so the roll ranges come with the item, and the
+real game answers that. The stand-in watched for a bare Ctrl+C only, so on
+2026-08-17 it stopped answering and all four press harnesses failed at the copy.
+Anything that changes the key sequence changes this contract too.
+
 Other flags: `--self-test-hook`, `--press-hotkey`, `--list-windows`,
 `--check-clipboard`.
 
@@ -260,8 +267,8 @@ is why the hook is what makes the press path testable. Both watch the hotkey.
 bash hack/check-all.sh <exe>
 ```
 
-Nine harnesses in order, keeps going after a failure, exits with the number
-that failed. It refuses to start when a real Path of Exile window is open,
+Ten runs of seven harness scripts, in order, keeps going after a failure, exits
+with the number that failed. press-check runs four times, once per item file. It refuses to start when a real Path of Exile window is open,
 because the harnesses open stand-ins carrying the game's own title and inject
 keys at whatever holds the foreground. `--anyway` overrides that, `--only NAME`
 runs one.
@@ -347,6 +354,12 @@ minutes rather than an hour.
 - PoE2 groups them under `equipment_filters`. PoE1 splits them into
   `armour_filters` and `weapon_filters`. The wrong shape is refused outright.
 - `rune_sockets`, `spirit`, `reload_time` are PoE2 only.
+- **An internal id must never reach the wire.** `item.has_empty_modifier` is
+  upstream's own marker, not a filter. It is translated into a count group of one
+  over the pseudo stat for the empty slot, and the marker is stripped before the
+  request. Sending it answers `Invalid filter: has_empty_modifier` and the whole
+  search fails, for every craftable rare and magic item. A unit test asserted the
+  broken shape, so only the end to end harness against the real API caught it.
 - Guarded by `poe-wayfinder-core/tests/upstream_property_ids.rs`, which reads the
   ids out of both reference checkouts.
 - thiserror Display prints only the outermost message. Render the chain with
@@ -386,9 +399,14 @@ function nobody calls still counts as ported. This stage is what catches that.
 ## No unwired code
 
 The `architecture` stage fails on any `pub fn` that no production code calls.
-It reads both crates. 19 ported functions were dead when the rule was added.
-Every one was wired into real behaviour rather than deleted, because deleting
-them would have dropped function parity below 100.
+It reads both crates. It read 100 percent while 53 functions were dead, because
+the checker counted a name inside a string literal as a caller, and counted a
+bare word that matched a struct field as one too. `finished()` passed on the log
+line "price check finished". `bounds::negate` passed on a field called `negate`.
+
+All 53 are resolved as of 2026-08-17. Most became real behaviour. Four are
+waived in `WAIVED` with a reason, because the only thing upstream calls them
+from is a feature we do not offer.
 
 A helper used only inside its own file should not be `pub`. A helper used
 nowhere is either wired or it is a parity fiction.
@@ -531,3 +549,10 @@ The two line string then aborts every `[ "$a" -gt "$b" ]` with
 field that the driver computes by calling the same function the request
 builder calls, separately. Delete the argument from the request and every
 assertion still passes.
+
+**An assertion slower than the run it lives in can never pass.** press-check
+greps for the frame heartbeat to prove the loop still ticks. The heartbeat fired
+every 600 frames, which at a 100ms frame is 60 seconds, and the harness finishes
+in 10. It failed on every run since it was written. It is every 20 frames now.
+When a harness asserts on something periodic, compare the period against the
+length of the run.
