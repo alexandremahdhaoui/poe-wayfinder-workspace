@@ -36,6 +36,10 @@ Delete an entry here once the user confirms it works in the game.
       decisions the data no longer has, the line saying what an item gained
       and lost since the last check, the span on a property row, and a
       Mageblood asking for the legacies it cannot print.
+- [ ] The redesigned panel, 2026-08-18. Photographed at every step and all ten
+      harnesses pass, but nobody has played with it. The pad rail, the greyed
+      rows, the leader lines and the new tab strip are all unseen in a real
+      session.
 
 - [ ] A whole PoE2 session on a pad. Confirmed on 2026-08-17: the DualSense
       enumerated, every button decoded against its own report descriptor, the
@@ -79,6 +83,9 @@ Delete an entry here once the user confirms it works in the game.
 - A pad script counts in polls of the frame loop, never in seconds, so a
   harness means the same thing on a slow machine. 2026-08-17.
 - `hack/logo.py` and `png.py` are untracked and stay on disk.
+- The panel has one token set and one style pass as of 2026-08-18. Colours are
+  not picked at call sites. Gold is focus, teal is a value in use, ember is an
+  unsent change.
 - Every public function has a caller as of 2026-08-17. 53 were dead when the
   `architecture` blind spot was fixed. All are wired, or waived in `WAIVED`
   with the reason. `likelyFinishedItem` is the last waive: it gates a second
