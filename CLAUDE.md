@@ -1,4 +1,4 @@
-# CLAUDE.md — poe-wayfinder-workspace
+# CLAUDE.md — poe-wayfinder-factory
 
 Read `~/.claude/CLAUDE.md` then `workspace/CLAUDE.md`. Both apply.
 

@@ -1,4 +1,4 @@
-# poe-wayfinder-workspace
+# poe-wayfinder-factory
 
 Owns the files that sit at the root of the `poe-wayfinder` workspace.
 

@@ -14,7 +14,7 @@ done
 # Every sibling repo holding a go.mod must appear in go.work.
 for d in ../poe-wayfinder-*; do
     name=$(basename "$d")
-    [ "$name" = "poe-wayfinder-workspace" ] && continue
+    [ "$name" = "poe-wayfinder-factory" ] && continue
 
     if [ -f "$d/go.mod" ] && ! grep -q "\./$name" workspace/go.work; then
         echo "$name has a go.mod but is missing from go.work" >&2

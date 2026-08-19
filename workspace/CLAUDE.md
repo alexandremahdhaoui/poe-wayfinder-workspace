@@ -116,7 +116,7 @@ passes with neither, so a fresh checkout still builds.
 
 | Repo | Owns |
 |---|---|
-| poe-wayfinder-workspace | the workspace root files |
+| poe-wayfinder-factory | the workspace root files |
 | poe-wayfinder-spec | config keys and network policy |
 | poe-wayfinder-data | the built ndjson |
 | poe-wayfinder-core | the domain. No I/O. |
